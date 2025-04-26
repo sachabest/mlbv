@@ -204,7 +204,6 @@ def streamlink(
     streamlink_cmd.append(_get_resolution())
 
     LOG.debug("Playing: %s", str(streamlink_cmd))
-    print(config.FFMPEG)
     proc = subprocess.Popen(streamlink_cmd, stdout=subprocess.PIPE)
     proc2 = subprocess.Popen(
         [
