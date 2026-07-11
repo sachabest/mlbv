@@ -21,10 +21,10 @@ import mlbv.mlbam.common.session as session
 
 LOG = logging.getLogger(__name__)
 
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:66.0) "
-    "Gecko/20100101 Firefox/66.0"
-)
+# NOTE: MLB's edge/WAF returns HTTP 451 for POST /api/v1/authn when the
+# User-Agent contains "Mozilla" (i.e. spoofs a browser). Use a non-browser
+# UA so the Okta auth request reaches the auth server instead of being blocked.
+USER_AGENT = "mlbv/{}".format(config.CONFIG.version if hasattr(config, "CONFIG") and hasattr(config.CONFIG, "version") else "python-requests")
 
 PLATFORM = "macintosh"
 BAM_SDK_VERSION = "3.4"
@@ -82,8 +82,9 @@ class MLBSession(session.Session):
             },
         }
         LOG.debug("login: %s", authn_params["username"])
-        authn_response = self.session.post(AUTHN_URL, json=authn_params).json()
-        LOG.debug("login: authn_response: %s", authn_response)
+        authn_response = self.session.post(AUTHN_URL, json=authn_params)
+        LOG.debug("login: authn_response: %d %s", authn_response.status_code, authn_response.text)
+        authn_response = authn_response.json()
         self.session_token = authn_response["sessionToken"]
         self._state["session_token_time"] = str(datetime.datetime.now(tz=pytz.UTC))
         self.save()
@@ -279,7 +280,6 @@ class MLBSession(session.Session):
 
     def _create_session(self):
         headers = {
-
             "Authorization": f"Bearer {self._state['OKTA_ACCESS_TOKEN']}",
             "User-agent": USER_AGENT,
             #            "Accept": "application/vnd.media-service+json; version=1",

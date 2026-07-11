@@ -327,6 +327,7 @@ def main():
             os.path.splitext(os.path.basename(sys.argv[0]))[0] + ".log",
         ),
         True,
+        console_loglevel=logging.DEBUG if args.verbose else logging.INFO
     )
 
     global LOG
